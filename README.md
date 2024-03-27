@@ -2,8 +2,14 @@
 Simple Team Member management application that allows the user to view, edit, add, and delete team members. 
 Django restful api backend and react frontend, using SQLlite by default as a data store. 
 
+
+https://github.com/arnehuang/team-members/assets/9079232/a1dd8485-a9d2-45bb-9c50-d7de440142b9
+
+
+
+
 # Building and running
-First, install pipenv globally
+First, globally install node.js >= 18 (recommend using nvm) and pipenv 
 
 `pip install pipenv` 
 
