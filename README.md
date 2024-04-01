@@ -3,8 +3,7 @@ Simple Team Member management application that allows the user to view, edit, ad
 Django restful api backend and react frontend, using SQLlite by default as a data store. 
 
 
-https://github.com/arnehuang/team-members/assets/9079232/a1dd8485-a9d2-45bb-9c50-d7de440142b9
-
+https://github.com/arnehuang/team-members/assets/9079232/f193360b-1919-4bdb-b75b-ba30bfb8beb3
 
 
 
@@ -91,6 +90,6 @@ For example there are
 
 -No auth
 
--No tests
+-Minimal tests
 
 -No deployment details
