@@ -1,18 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Tooltip from '@mui/material/Tooltip';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { FormControl, InputAdornment, IconButton } from '@mui/material';
-import { grey } from '@mui/material/colors';
 import TeamMemberForm from './components/TeamMemberForm';
 import { TeamMember } from './types';
+import ErrorSnackbar from './components/ErrorSnackbar';
 
 const AddTeamMember: React.FC = () => {
   const [teamMember, setTeamMember] = useState<TeamMember>({
@@ -20,24 +11,44 @@ const AddTeamMember: React.FC = () => {
     last_name: '',
     phone_number: '',
     email: '',
-    role: 'regular'
+    role: 'regular',
   });
+  const [apiError, setApiError] = useState<string>('');
+  const [errorOpen, setErrorOpen] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    axios.post('/api/add/', teamMember)
+    axios
+      .post('/api/add/', teamMember)
       .then(() => navigate('/'))
-      .catch(error => console.error('Error adding member:', error));
+      .catch((error) => {
+        console.error('Error adding member:', error);
+        const errorMessage = error.response?.data?.error?.email
+          ? String(error.response?.data?.error?.email[0])
+          : 'Unexpected error while adding team member!';
+        setApiError(errorMessage);
+        setErrorOpen(true);
+      });
   };
 
+  const handleClose = () => {
+    setErrorOpen(false);
+  };
   return (
-    <TeamMemberForm
-      teamMember={teamMember}
-      setTeamMember={setTeamMember}
-      onSubmit={handleSubmit}
-      onCancel={() => navigate('/')}
-    />
+    <>
+      <TeamMemberForm
+        teamMember={teamMember}
+        setTeamMember={setTeamMember}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/')}
+      />
+      <ErrorSnackbar
+        open={errorOpen}
+        errorMessage={apiError}
+        handleClose={handleClose}
+      />
+    </>
   );
 };
 
