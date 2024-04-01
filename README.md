@@ -73,6 +73,18 @@ npm start
 
 Note: Runs on http://localhost:3000 so check there is nothing running on that port
 
+# Testing
+## Backend
+```
+python manage.py test team_members
+```
+
+## Frontend
+```commandline
+cd team-member-react
+npm test
+```
+
 
 # This app is not production ready
 For example there are
