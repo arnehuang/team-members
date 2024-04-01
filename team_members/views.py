@@ -22,7 +22,6 @@ class TeamMemberListView(ValidationErrorMixin, ListAPIView):
     queryset = TeamMember.objects.all()
     serializer_class = TeamMemberSerializer
     pagination_class = PageNumberPagination
-    page_size = 1
 
 
 class TeamMemberDetailView(ValidationErrorMixin, RetrieveAPIView):
