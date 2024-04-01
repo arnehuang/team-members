@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 import axios from 'axios';
-import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
 import IconButton from '@mui/material/IconButton';
-import EditIcon from '@mui/icons-material/Edit';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -20,6 +18,9 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import TeamMemberCard from './components/TeamMemberCard';
+import { getErrorMessage } from './errorUtils';
+import ErrorSnackbar from './components/ErrorSnackbar';
 
 interface PaginationData {
   count: number;
@@ -35,11 +36,34 @@ const TeamMembersList: React.FC = () => {
     emailContains?: string;
     role?: string;
   }>({});
+
+  const location = useLocation();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarDetails, setSnackbarDetails] = useState('');
+
+  const [searchPerformed, setSearchPerformed] = useState(false);
   const navigate = useNavigate();
+
+  const [apiError, setApiError] = useState<string>('');
+  const [errorOpen, setErrorOpen] = useState<boolean>(false);
+  const handleClose = () => {
+    setErrorOpen(false);
+  };
 
   useEffect(() => {
     fetchTeamMembers();
-  }, []);
+    if (location.state?.message) {
+      setSnackbarMessage(location.state.message);
+      setSnackbarDetails(location.state.details || '');
+      setSnackbarOpen(true);
+      navigate(location.pathname, { state: {}, replace: true });
+    }
+  }, [location, navigate]);
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
 
   const fetchTeamMembers = (queryParams?: {
     email__icontains?: string;
@@ -51,10 +75,17 @@ const TeamMembersList: React.FC = () => {
         setPagination(response.data);
         setTeamMembers(response.data.results);
       })
-      .catch((error) => console.error('Error fetching data:', error));
+      .catch((error) => {
+        console.error('Error fetching member:', error);
+        const errorMessage = getErrorMessage(error);
+        setApiError(errorMessage);
+        setErrorOpen(true);
+      });
   };
 
   const handleSearch = () => {
+    setSearchPerformed(true);
+
     const queryParams: { email__icontains?: string; role?: string } = {};
 
     if (searchParams.emailContains) {
@@ -92,8 +123,14 @@ const TeamMembersList: React.FC = () => {
     }
   };
 
+  const handleClear = () => {
+    setSearchParams({}); // Reset search parameters
+    setSearchPerformed(false); // Reset the search performed flag
+    fetchTeamMembers(); // Fetch the original list without filters
+  };
+
   return (
-    <Container maxWidth="sm">
+    <Container>
       <Box sx={{ p: 2 }}>
         <Box
           sx={{
@@ -108,7 +145,8 @@ const TeamMembersList: React.FC = () => {
           </Typography>
           <IconButton
             color="primary"
-            aria-label="add team member"
+            aria-label="Add team member"
+            title="Add team member"
             onClick={() => navigate('/add')}
             sx={{ fontSize: '3rem' }}
           >
@@ -116,98 +154,132 @@ const TeamMembersList: React.FC = () => {
           </IconButton>
         </Box>
         <Typography variant="subtitle1" sx={{ color: grey[600] }}>
-          You have {pagination?.count} team members.
+          There&apos;s {pagination?.count} team member
+          {pagination?.count !== 1 ? 's' : ''}
+          {searchPerformed && Object.keys(searchParams).length > 0
+            ? ' matching your search criteria.'
+            : ' in total.'}
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, mt: 2 }}>
-          <TextField
-            label="Email contains..."
-            value={searchParams.emailContains || ''}
-            onChange={(e) =>
-              setSearchParams({
-                ...searchParams,
-                emailContains: e.target.value,
-              })
-            }
-            sx={{ flexGrow: 1, mr: 2 }}
-          />
-          <Select
-            value={searchParams.role || ''}
-            onChange={(e) =>
-              setSearchParams({
-                ...searchParams,
-                role: e.target.value || undefined,
-              })
-            }
-            displayEmpty
-            sx={{ minWidth: 120, mr: 2 }}
+        <Box
+          sx={{
+            mb: 4,
+            mt: 2,
+            flexDirection: { xs: 'column' },
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mb: { xs: 2, sm: 2 },
+            }}
           >
-            <MenuItem value="">Select Role</MenuItem>
-            <MenuItem value="admin">Admin</MenuItem>
-            <MenuItem value="regular">Regular</MenuItem>
-          </Select>
-          <Button
-            variant="contained"
-            onClick={handleSearch}
-            sx={{ minWidth: 120 }}
+            <TextField
+              label="Email contains..."
+              value={searchParams.emailContains || ''}
+              onChange={(e) =>
+                setSearchParams({
+                  ...searchParams,
+                  emailContains: e.target.value,
+                })
+              }
+              sx={{
+                flexGrow: 1,
+                minWidth: 120,
+                mb: { xs: 2, sm: 0 },
+                mr: 1,
+              }}
+            />
+            <Select
+              value={searchParams.role || ''}
+              onChange={(e) =>
+                setSearchParams({
+                  ...searchParams,
+                  role: e.target.value || undefined,
+                })
+              }
+              displayEmpty
+              sx={{ minWidth: 120, mb: { xs: 2, sm: 0 }, mr: { sm: 2 } }}
+            >
+              <MenuItem value="">Role</MenuItem>
+              <MenuItem value="admin">Admin</MenuItem>
+              <MenuItem value="regular">Regular</MenuItem>
+            </Select>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+            }}
           >
-            Search
-          </Button>
+            <Button
+              variant="contained"
+              onClick={handleSearch}
+              aria-label="Search for team members"
+              title="Search for team members"
+              sx={{ minWidth: 60, mb: { xs: 2, sm: 0 }, mr: 1 }}
+            >
+              Search
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleClear}
+              aria-label="Clear search parameters"
+              title="Clear search parameters"
+              sx={{
+                minWidth: 60,
+                backgroundColor: 'green',
+                '&:hover': {
+                  backgroundColor: 'darkgreen',
+                },
+                mb: { xs: 2, sm: 0 },
+              }}
+            >
+              Clear
+            </Button>
+          </Box>
         </Box>
-        <List>
+        <List sx={{ columnCount: { xs: 1, sm: 2, md: 3 }, columnGap: '16px' }}>
           {teamMembers.map((member) => (
-            <ListItem key={member.id} divider>
-              <ListItemAvatar>
-                <Avatar>{member.first_name[0]}</Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={
-                  <Typography
-                    component="span"
-                    variant="body1"
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {`${member.first_name} ${member.last_name}`}{' '}
-                    {member.role === 'admin' && '(admin)'}
-                  </Typography>
-                }
-                secondary={
-                  <>
-                    <Typography
-                      component="span"
-                      variant="body2"
-                      display="block"
-                    >
-                      {member.phone_number}
-                    </Typography>
-                    <Typography
-                      component="span"
-                      variant="body2"
-                      display="block"
-                    >
-                      {member.email}
-                    </Typography>
-                  </>
-                }
-              />
-              <IconButton
-                edge="end"
-                aria-label="edit"
-                onClick={() => navigate(`/edit/${member.id}`)}
-              >
-                <EditIcon />
-              </IconButton>
-            </ListItem>
+            <Box key={member.id} sx={{ breakInside: 'avoid', marginBottom: 2 }}>
+              <TeamMemberCard member={member} />
+            </Box>
           ))}
         </List>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <IconButton onClick={handlePrevious} disabled={!pagination?.previous}>
+          <IconButton
+            onClick={handlePrevious}
+            disabled={!pagination?.previous}
+            aria-label="Previous page of team members"
+            title="Previous page of team members"
+          >
             {<NavigateBeforeIcon />}
           </IconButton>
-          <IconButton onClick={handleNext} disabled={!pagination?.next}>
+          <IconButton
+            onClick={handleNext}
+            disabled={!pagination?.next}
+            aria-label="Next page of team members"
+            title="Next page of team members"
+          >
             {<NavigateNextIcon />}
           </IconButton>
         </Box>
       </Box>
+      <Snackbar open={snackbarOpen} autoHideDuration={12000}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+          {snackbarDetails && <div>{snackbarDetails}</div>}
+        </Alert>
+      </Snackbar>
+      <ErrorSnackbar
+        open={errorOpen}
+        errorMessage={apiError}
+        handleClose={handleClose}
+      />
     </Container>
   );
 };

@@ -1,7 +1,13 @@
 from django.core.exceptions import FieldError
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    DestroyAPIView,
+    ListAPIView,
+    RetrieveAPIView,
+    UpdateAPIView,
+)
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -11,7 +17,7 @@ from .serializers import TeamMemberSerializer
 
 class ValidationErrorMixin:
     def handle_validation_error(self, exc):
-        return Response({'error': exc.detail}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": exc.detail}, status=status.HTTP_400_BAD_REQUEST)
 
     def handle_exception(self, exc):
         if isinstance(exc, ValidationError):
@@ -32,15 +38,19 @@ class TeamMemberListView(ValidationErrorMixin, ListAPIView):
                 if filters:
                     queryset = queryset.filter(**filters)
         except FieldError:
-            raise ValidationError(f"Bad query: {self.request.query_params}. "
-                                  f"Acceptable keys include email, first_name, id, last_name, phone_number, role")
+            raise ValidationError(
+                f"Bad query: {self.request.query_params}. "
+                f"Acceptable keys include email, first_name, id, last_name, phone_number, role"
+            )
         return queryset
 
     # query e.g. /api/?email__icontains=john&role=admin
     def parse_search_query(self, search_query):
         filters = {}
         for key, value in search_query.items():
-            if '__' in key:
+            if "page" == key:
+                continue
+            if "__" in key:
                 filters[key] = value
             else:
                 filters[key] = value
@@ -50,7 +60,7 @@ class TeamMemberListView(ValidationErrorMixin, ListAPIView):
 class TeamMemberDetailView(ValidationErrorMixin, RetrieveAPIView):
     queryset = TeamMember.objects.all()
     serializer_class = TeamMemberSerializer
-    lookup_field = 'pk'
+    lookup_field = "pk"
 
 
 class TeamMemberCreateView(ValidationErrorMixin, CreateAPIView):
@@ -61,10 +71,10 @@ class TeamMemberCreateView(ValidationErrorMixin, CreateAPIView):
 class TeamMemberUpdateView(ValidationErrorMixin, UpdateAPIView):
     queryset = TeamMember.objects.all()
     serializer_class = TeamMemberSerializer
-    lookup_field = 'pk'
+    lookup_field = "pk"
 
 
 class TeamMemberDeleteView(ValidationErrorMixin, DestroyAPIView):
     queryset = TeamMember.objects.all()
     serializer_class = TeamMemberSerializer
-    lookup_field = 'pk'
+    lookup_field = "pk"

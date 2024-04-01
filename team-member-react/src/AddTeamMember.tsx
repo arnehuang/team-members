@@ -4,6 +4,7 @@ import axios from 'axios';
 import TeamMemberForm from './components/TeamMemberForm';
 import { TeamMember } from './types';
 import ErrorSnackbar from './components/ErrorSnackbar';
+import { getErrorMessage } from './errorUtils';
 
 const AddTeamMember: React.FC = () => {
   const [teamMember, setTeamMember] = useState<TeamMember>({
@@ -21,12 +22,17 @@ const AddTeamMember: React.FC = () => {
     event.preventDefault();
     axios
       .post('/api/add/', teamMember)
-      .then(() => navigate('/'))
+      .then(() =>
+        navigate('/', {
+          state: {
+            message: `${teamMember.role} team member added successfully: ${teamMember.email}`,
+          },
+          replace: true,
+        }),
+      )
       .catch((error) => {
         console.error('Error adding member:', error);
-        const errorMessage = error.response?.data?.error?.email
-          ? String(error.response?.data?.error?.email[0])
-          : 'Unexpected error while adding team member!';
+        const errorMessage = getErrorMessage(error);
         setApiError(errorMessage);
         setErrorOpen(true);
       });

@@ -175,7 +175,13 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({
               marginTop: 2,
             }}
           >
-            <Button variant="outlined" color="secondary" onClick={onCancel}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              aria-label="Cancel"
+              title="Cancel"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
             {extraButtons}
@@ -183,6 +189,8 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({
               type="submit"
               variant="contained"
               color="primary"
+              aria-label="Save"
+              title="Save"
               disabled={isSaveDisabled}
             >
               Save
